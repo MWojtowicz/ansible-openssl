@@ -1,0 +1,18 @@
+galaxy_info:
+  author: Michał Wójtowicz <poczta@mwojtowicz.it>
+  description: Creates self signed certificates and updates machine trusted CA bundle
+  company: mwojtowicz.it
+
+  license: MIT
+
+  min_ansible_version: 2.4
+
+  github_branch: master
+
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Amazon
+      versions:
+        - all

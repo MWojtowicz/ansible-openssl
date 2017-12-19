@@ -1,0 +1,14 @@
+---
+- name: "Read CSR config"
+  set_fact:
+    domainOutput: "{{ lookup('file', ssl_workdir + '/' + item.domainFilename|default(item.domain) + '.csr.cnf') }}"
+
+- name: "Generate key"
+  shell: |
+    openssl req -new -sha256 -nodes -newkey rsa:2048 \
+    -out {{ item.domainFilename|default(item.domain) }}.csr \
+    -keyout {{ item.domainFilename|default(item.domain) }}.key \
+    -config {{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.csr.cnf
+  args:
+    chdir: "{{ ssl_workdir }}"
+    creates: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.key"

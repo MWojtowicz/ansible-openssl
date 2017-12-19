@@ -1,0 +1,13 @@
+---
+- name: "Generate certificate"
+  command: |
+    openssl x509 -req -days 3650 -sha256 \
+    -in {{ item.domainFilename|default(item.domain) }}.csr \
+    -CA {{ ssl_ca_pem_path }} \
+    -CAkey {{ ssl_ca_key_path }} \
+    -CAcreateserial \
+    -out {{ item.domainFilename|default(item.domain) }}.crt \
+    -extfile {{ item.domainFilename|default(item.domain) }}.v3.ext
+  args:
+    chdir: "{{ ssl_workdir }}"
+    creates: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.crt"

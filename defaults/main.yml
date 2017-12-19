@@ -1,0 +1,14 @@
+ssl_workdir: /opt/ansible-ssl-workdir
+
+ssl_update_server_ca: true
+
+ssl_ca_key_path: ""
+ssl_ca_pem_path: ""
+
+ssl_ca_country: PL
+ssl_ca_province: warminsko-mazurskie
+ssl_ca_city: Klewki
+ssl_ca_organization: CIA
+ssl_ca_domain: ca.localhost
+
+ssl_domains: []

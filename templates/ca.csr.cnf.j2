@@ -1,0 +1,14 @@
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+
+[dn]
+C={{ item.countryCode|default(ssl_ca_country) }}
+ST={{ item.province|default(ssl_ca_province) }}
+L={{ item.city|default(ssl_ca_city) }}
+O={{ item.companyName|default(ssl_ca_organization) }}
+OU={{ item.companyDepartment|default('') }}
+emailAddress={{ item.email|default('') }}
+CN = {{ item.domain }}

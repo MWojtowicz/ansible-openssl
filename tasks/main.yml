@@ -1,0 +1,80 @@
+---
+- name: "Create workdir"
+  file:
+    path: "{{ ssl_workdir }}"
+    state: directory
+
+- name: "Instal OpenSSL"
+  package:
+      name: openssl
+      state: present
+
+- name: "Generate certificate authority"
+  command: openssl genrsa -out ca.key 2048
+  args:
+    chdir: "{{ ssl_workdir }}"
+    creates: "{{ ssl_workdir }}/ca.key"
+  when: ssl_ca_key_path == ""
+
+- name: "Store CA key path"
+  set_fact:
+    ssl_ca_key_path: "{{ ssl_workdir }}/ca.key"
+  when: ssl_ca_key_path == ""
+
+- name: "Generate authority signing key"
+  command: >
+    openssl req -x509 -new -nodes -sha256 -days 3650
+    -key ca.key
+    -out ca.pem
+    -subj "/C={{ ssl_ca_country }}/ST={{ ssl_ca_province }}/L={{ ssl_ca_city }}/O={{ ssl_ca_organization }}/CN={{ ssl_ca_domain }}"
+  args:
+    chdir: "{{ ssl_workdir }}"
+    creates: "{{ ssl_workdir }}/ca.pem"
+  when: ssl_ca_pem_path == ""
+
+- name: "Store CA pem path"
+  set_fact:
+    ssl_ca_pem_path: "{{ ssl_workdir }}/ca.pem"
+  when: ssl_ca_pem_path == ""
+
+- name: "Create signing request config"
+  template:
+    src: ca.csr.cnf.j2
+    dest: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.csr.cnf"
+  with_items: "{{ ssl_domains }}"
+
+- name: "Alternative DNS configuration"
+  template:
+    src: v3.ext.j2
+    dest: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.v3.ext"
+  with_items: "{{ ssl_domains }}"
+
+- include: generateKey.yml
+  with_items: "{{ ssl_domains }}"
+
+- include: generateCertificate.yml
+  with_items: "{{ ssl_domains }}"
+
+- name: "Move keys to destination point"
+  copy:
+    src: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.key"
+    dest: "{{ item.keyDestination }}"
+    remote_src: yes
+  with_items: "{{ ssl_domains }}"
+
+- name: "Move certificates to destination point"
+  copy:
+    src: "{{ ssl_workdir }}/{{ item.domainFilename|default(item.domain) }}.crt"
+    dest: "{{ item.crtDestination }}"
+    remote_src: yes
+  with_items: "{{ ssl_domains }}"
+
+- name: "Copy server CA to trusted directory"
+  copy:
+    src: "{{ ssl_ca_pem_path }}"
+    dest: /etc/pki/ca-trust/source/anchors/
+    remote_src: yes
+  when: "ssl_update_server_ca == true"
+
+- name: "Update CA trust"
+  command: update-ca-trust
